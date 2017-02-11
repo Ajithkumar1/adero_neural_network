@@ -3,14 +3,23 @@
 #include "std_msgs/Float32.h"
 #include "std_msgs/String.h"
 #include "adero_neural_network/Input.h"
+#include "adero_neural_network/ActualInput.h"
 #include <iostream>
 
 class Weight
 {
 public:
-	float *weight_lower;
-	float *weight_upper;
+	static float *weight_lower;
+	static float *weight_upper;
+	static int noc;
+	static int nic;
 };
+
+
+float *Weight::weight_lower;
+float *Weight::weight_upper;
+int Weight::noc;
+int Weight::nic;
 
 float sigmoid(float x)
 {
@@ -254,7 +263,7 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 
 
 
-	*weight_object.weight_upper = new float[(ni+1)*(ni)];
+	weight_object.weight_upper = new float[(ni+1)*(no)];
 
 	for(int j=0;j<=ni;j++)
 	{
@@ -275,21 +284,100 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 	// 	}
 	// }
 
-	*weight_object.weight_lower = new float[(ni+1)*(ni)];
+    weight_object.nic=ni;
+    weight_object.noc=no;
+
+	weight_object.weight_lower = new float[(ni+1)*(ni)];
 
 	for(int i=0;i<=ni;i++)
 	{
 		for(int j=1;j<=ni;j++)
 		{
-			weight_object.weight_lower[i*ni+j]=w[i][j];
+			weight_object.weight_lower[i*ni+j]=v[i][j];
 		//		cout <<"v_weight "<<i<<j<<","<<v[i][j]<<endl;
 
 		}
 	}
 
 
-
 }
+
+void input_callback(const adero_neural_network::ActualInput::ConstPtr& in)
+{
+	Weight w_obj;
+	int ni=w_obj.nic,no=w_obj.noc;
+	int test[no+1];
+	float x[ni+1];
+	float t[no+1];
+	float v[ni+1][ni];
+	float w[ni+1][no];
+	float z_in[ni+1];
+	float z[ni+1];
+	float summation = 0;
+	float y_in[no];
+	float y[no];
+
+	x[0]=1;
+	z[0]=1;
+	for(int i=1;i<=ni;i++)
+	{
+		x[i]=in->data[i-1];
+	}
+
+	for(int j=0;j<=ni;j++)
+	{
+		for(int k=1;k<=no;k++)
+		{
+			w[j][k]= w_obj.weight_upper[j*ni+k];
+		//		cout <<"w_weight "<<i<<j<<","<<v[i][j]<<endl;
+		}
+	}
+
+	for(int i=0;i<=ni;i++)
+	{
+		for(int j=1;j<=ni;j++)
+		{
+			v[i][j]=w_obj.weight_lower[i*ni+j];
+		//		cout <<"v_weight "<<i<<j<<","<<v[i][j]<<endl;
+
+		}
+	}
+
+
+		//after training
+	z[0]=1;
+	z_in[0]=0;//check here
+
+	for(int j=1;j<=ni;j++)
+	{
+		for(int i=1;i<=ni;i++)
+		{
+			summation += (x[i]*v[i][j]);//summation to zero
+		}
+		z_in[j]=v[0][j]+summation;
+		z[j]=sigmoid(z_in[j]);
+	}
+		//upper layer starts
+
+
+	summation = 0;
+	for(int k=1;k<=no;k++)
+	{
+		for(int j=1;j<=ni;j++)
+		{
+			summation += (z[j]*w[j][k]);
+		}
+		y_in[k]=w[0][k]+summation;
+		y[k]=sigmoid(y_in[k]);
+	}
+	//upper layer ends
+	//test starts
+	for(int p=1;p<=no;p++)
+	{
+	    ROS_INFO("Actual output %d = %f",p,y[p]);
+	}
+}
+
 
 int main(int argc, char **argv)
 {
@@ -299,6 +387,9 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle subscrive_input;
 	ros::Subscriber sub3 = subscrive_input.subscribe("array", 100, arrayCallback);
+
+	ros::NodeHandle subscrive_actual_input;
+	ros::Subscriber sub_actual = subscrive_actual_input.subscribe("actual", 100, input_callback);
 
 	ros::Rate loop_rate(10);
 	
