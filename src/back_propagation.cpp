@@ -9,15 +9,15 @@
 class Weight
 {
 public:
-	static float *weight_lower;
-	static float *weight_upper;
+	static float *weight_lower_;
+	static float *weight_upper_;
 	static int noc;
 	static int nic;
 };
 
 
-float *Weight::weight_lower;
-float *Weight::weight_upper;
+float *Weight::weight_lower_;
+float *Weight::weight_upper_;
 int Weight::noc;
 int Weight::nic;
 
@@ -27,7 +27,7 @@ float sigmoid(float x)
 	f=(1/(1+ exp(-x)));
 	return f;
 }
-float sigmoid_derivative(float x)
+float sigmoidDerivative(float x)
 {
 	float f;
 	f=sigmoid(x)*(1-sigmoid(x));
@@ -177,7 +177,7 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 
 		for(int k=1; k<=no;k++)
 		{
-			del_k[k]=(t[k]-y[k])*(sigmoid_derivative(y_in[k]));
+			del_k[k]=(t[k]-y[k])*(sigmoidDerivative(y_in[k]));
 		}
 
 
@@ -209,7 +209,7 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 
 		for(int j=1;j<=ni;j++)
 		{
-			del_j[j]=del_inj[j]*sigmoid_derivative(z_in[j]);
+			del_j[j]=del_inj[j]*sigmoidDerivative(z_in[j]);
 		}
 
 
@@ -263,13 +263,13 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 
 
 
-	weight_object.weight_upper = new float[(ni+1)*(no)];
+	weight_object.weight_upper_ = new float[(ni+1)*(no)];
 
 	for(int j=0;j<=ni;j++)
 	{
 		for(int k=1;k<=no;k++)
 		{
-			weight_object.weight_upper[j*ni+k]=w[j][k];
+			weight_object.weight_upper_[j*ni+k]=w[j][k];
 		//		cout <<"v_weight "<<i<<j<<","<<v[i][j]<<endl;
 
 		}
@@ -279,7 +279,7 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 	// {
 	// 	for(int k=1;k<=no;k++)
 	// 	{
-	// 		cout <<"v_weight "<<j<<k<<","<<weight_upper[j*ni+k]<<endl;
+	// 		cout <<"v_weight "<<j<<k<<","<<weight_upper_[j*ni+k]<<endl;
 
 	// 	}
 	// }
@@ -287,13 +287,13 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
     weight_object.nic=ni;
     weight_object.noc=no;
 
-	weight_object.weight_lower = new float[(ni+1)*(ni)];
+	weight_object.weight_lower_ = new float[(ni+1)*(ni)];
 
 	for(int i=0;i<=ni;i++)
 	{
 		for(int j=1;j<=ni;j++)
 		{
-			weight_object.weight_lower[i*ni+j]=v[i][j];
+			weight_object.weight_lower_[i*ni+j]=v[i][j];
 		//		cout <<"v_weight "<<i<<j<<","<<v[i][j]<<endl;
 
 		}
@@ -302,7 +302,7 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 
 }
 
-void input_callback(const adero_neural_network::ActualInput::ConstPtr& in)
+void inputCallback(const adero_neural_network::ActualInput::ConstPtr& in)
 {
 	Weight w_obj;
 	int ni=w_obj.nic,no=w_obj.noc;
@@ -328,7 +328,7 @@ void input_callback(const adero_neural_network::ActualInput::ConstPtr& in)
 	{
 		for(int k=1;k<=no;k++)
 		{
-			w[j][k]= w_obj.weight_upper[j*ni+k];
+			w[j][k]= w_obj.weight_upper_[j*ni+k];
 		//		cout <<"w_weight "<<i<<j<<","<<v[i][j]<<endl;
 		}
 	}
@@ -337,7 +337,7 @@ void input_callback(const adero_neural_network::ActualInput::ConstPtr& in)
 	{
 		for(int j=1;j<=ni;j++)
 		{
-			v[i][j]=w_obj.weight_lower[i*ni+j];
+			v[i][j]=w_obj.weight_lower_[i*ni+j];
 		//		cout <<"v_weight "<<i<<j<<","<<v[i][j]<<endl;
 
 		}
@@ -389,11 +389,10 @@ int main(int argc, char **argv)
 	ros::Subscriber sub3 = subscrive_input.subscribe("array", 100, arrayCallback);
 
 	ros::NodeHandle subscrive_actual_input;
-	ros::Subscriber sub_actual = subscrive_actual_input.subscribe("actual", 100, input_callback);
+	ros::Subscriber sub_actual = subscrive_actual_input.subscribe("actual", 100, inputCallback);
 
 	ros::Rate loop_rate(10);
 	
     ros::spin();
-
     return 0;
 }
