@@ -6,6 +6,7 @@
 #include "adero_neural_network/ActualInput.h"
 #include <iostream>
 
+//made a seperate class for weights and I/O number specifications
 class Weight
 {
 public:
@@ -21,12 +22,15 @@ float *Weight::weight_upper_;
 int Weight::noc;
 int Weight::nic;
 
+//binary sigmoid activation function
 float sigmoid(float x)
 {
 	float f;
 	f=(1/(1+ exp(-x)));
 	return f;
 }
+
+//derivative of binary sigmoid
 float sigmoidDerivative(float x)
 {
 	float f;
@@ -34,6 +38,10 @@ float sigmoidDerivative(float x)
 	return f;
 }
 
+// for  performing training operation
+// please have a look at "Fundamentals Of Neural Networks" by Laurene_Fausett. Thsi code exactly follows his conventions
+// We didnt use the zeroth index value of most of the arrays. We are planning to use them for setting unique flags which
+// can be used while working on complex ai system 
 void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 {
 
@@ -302,6 +310,7 @@ void arrayCallback(const adero_neural_network::Input::ConstPtr& in)
 
 }
 
+// after the network is trained. The weights are used for working with actual input sets
 void inputCallback(const adero_neural_network::ActualInput::ConstPtr& in)
 {
 	Weight w_obj;
@@ -386,10 +395,10 @@ int main(int argc, char **argv)
 	ros::Publisher number_publisher = node_obj.advertise<std_msgs::String>("/numbers",10);
 
 	ros::NodeHandle subscrive_input;
-	ros::Subscriber sub3 = subscrive_input.subscribe("array", 100, arrayCallback);
+	ros::Subscriber sub3 = subscrive_input.subscribe("training_pattern", 100, arrayCallback);
 
 	ros::NodeHandle subscrive_actual_input;
-	ros::Subscriber sub_actual = subscrive_actual_input.subscribe("actual", 100, inputCallback);
+	ros::Subscriber sub_actual = subscrive_actual_input.subscribe("actual_input", 100, inputCallback);
 
 	ros::Rate loop_rate(10);
 	

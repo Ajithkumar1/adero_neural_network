@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle n;
 
-	ros::Publisher pub = n.advertise<adero_neural_network::Input>("array", 100);
+	ros::Publisher pub = n.advertise<adero_neural_network::Input>("training_pattern", 100);
 
 	while (ros::ok())
 	{
