@@ -17,6 +17,7 @@ public:
 };
 
 
+
 float *Weight::weight_lower_;
 float *Weight::weight_upper_;
 int Weight::noc;
